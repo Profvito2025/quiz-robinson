@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="it">
 <head>
   <meta charset="UTF-8">
   <title>Quiz Robinson Crusoe</title>
@@ -18,46 +18,53 @@
   <div id="quiz"></div>
   <button id="invia">INVIA</button>
 
-  <!-- Contenitore nascosto per il contenuto da stampare -->
+  <!-- Contenitore invisibile per il contenuto PDF -->
   <div id="contenutoPdf" style="visibility: hidden; height: 0; overflow: hidden;"></div>
 
-  <!-- Libreria per generare PDF -->
+  <!-- Libreria html2pdf -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
   <script>
-    // Caricamento delle domande dai due file JSON
+    // Carica domande dai due file JSON
     async function caricaDomande() {
-      const [sceltaRes, apertaRes] = await Promise.all([
-        fetch('domande_scelta.json'),
-        fetch('domande_aperta.json')
-      ]);
-      const tutteScelte = await sceltaRes.json();
-      const tutteAperte = await apertaRes.json();
+      try {
+        const [sceltaRes, apertaRes] = await Promise.all([
+          fetch('domande_scelta.json'),
+          fetch('domande_aperta.json')
+        ]);
 
-      const scelteCasuali = tutteScelte.sort(() => 0.5 - Math.random()).slice(0, 80);
-      const apertaCasuale = tutteAperte[Math.floor(Math.random() * tutteAperte.length)];
+        const tutteScelte = await sceltaRes.json();
+        const tutteAperte = await apertaRes.json();
 
-      const tutteDomande = [...scelteCasuali, apertaCasuale];
-      const quizDiv = document.getElementById('quiz');
+        // Seleziona 80 domande a scelta + 1 aperta
+        const scelteCasuali = tutteScelte.sort(() => 0.5 - Math.random()).slice(0, 80);
+        const apertaCasuale = tutteAperte[Math.floor(Math.random() * tutteAperte.length)];
 
-      tutteDomande.forEach((domanda, i) => {
-        const div = document.createElement('div');
-        div.className = 'domanda';
+        const tutteDomande = [...scelteCasuali, apertaCasuale];
+        const quizDiv = document.getElementById('quiz');
 
-        if (domanda.tipo === 'scelta_multipla') {
-          div.innerHTML = `<p>${i + 1}. ${domanda.domanda}</p>` +
-            domanda.opzioni.map(opt =>
-              `<div class="opzione"><label><input type="radio" name="q${i}" value="${opt}"> ${opt}</label></div>`
-            ).join('');
-        } else if (domanda.tipo === 'aperta') {
-          div.innerHTML = `<p>${i + 1}. ${domanda.domanda}</p><textarea name="q${i}"></textarea>`;
-        }
+        tutteDomande.forEach((domanda, i) => {
+          const div = document.createElement('div');
+          div.className = 'domanda';
 
-        quizDiv.appendChild(div);
-      });
+          if (domanda.tipo === 'scelta_multipla') {
+            div.innerHTML = `<p>${i + 1}. ${domanda.domanda}</p>` +
+              domanda.opzioni.map(opt =>
+                `<div class="opzione"><label><input type="radio" name="q${i}" value="${opt}"> ${opt}</label></div>`
+              ).join('');
+          } else if (domanda.tipo === 'aperta') {
+            div.innerHTML = `<p>${i + 1}. ${domanda.domanda}</p><textarea name="q${i}"></textarea>`;
+          }
+
+          quizDiv.appendChild(div);
+        });
+      } catch (error) {
+        alert("Errore nel caricamento delle domande. Controlla i file JSON.");
+        console.error(error);
+      }
     }
 
-    // Gestione del click sul pulsante "INVIA"
+    // Salva le risposte in PDF
     document.getElementById('invia').addEventListener('click', () => {
       const contenitore = document.getElementById('contenutoPdf');
       contenitore.innerHTML = "<h2>Risposte del quiz</h2>";
@@ -76,7 +83,7 @@
       }
     });
 
-    // Avvia il caricamento delle domande quando la pagina si apre
+    // Avvio
     caricaDomande();
   </script>
 </body>
