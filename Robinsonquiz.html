@@ -18,8 +18,14 @@
   <div id="quiz"></div>
   <button id="invia">INVIA</button>
 
+  <!-- Contenitore nascosto per il contenuto da stampare -->
+  <div id="contenutoPdf" style="visibility: hidden; height: 0; overflow: hidden;"></div>
+
+  <!-- Libreria per generare PDF -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
   <script>
+    // Caricamento delle domande dai due file JSON
     async function caricaDomande() {
       const [sceltaRes, apertaRes] = await Promise.all([
         fetch('domande_scelta.json'),
@@ -51,24 +57,26 @@
       });
     }
 
+    // Gestione del click sul pulsante "INVIA"
     document.getElementById('invia').addEventListener('click', () => {
-      const contenuto = document.createElement('div');
-      contenuto.innerHTML = "<h2>Risposte del quiz</h2>";
+      const contenitore = document.getElementById('contenutoPdf');
+      contenitore.innerHTML = "<h2>Risposte del quiz</h2>";
 
       const domande = document.querySelectorAll('.domanda');
       domande.forEach((d, i) => {
         const testoDomanda = d.querySelector('p').innerText;
         const risposta = d.querySelector('input[type="radio"]:checked')?.value ||
-                         d.querySelector('textarea')?.value || "[Nessuna risposta]";
-        contenuto.innerHTML += `<p><strong>${i + 1}. ${testoDomanda}</strong><br>Risposta: ${risposta}</p>`;
+                         d.querySelector('textarea')?.value?.trim() || "[Nessuna risposta]";
+        contenitore.innerHTML += `<p><strong>${i + 1}. ${testoDomanda}</strong><br>Risposta: ${risposta}</p>`;
       });
 
       const nomeFile = prompt("Inserisci il nome del file PDF:");
       if (nomeFile) {
-        html2pdf().from(contenuto).save(nomeFile + ".pdf");
+        html2pdf().from(contenitore).save(nomeFile + ".pdf");
       }
     });
 
+    // Avvia il caricamento delle domande quando la pagina si apre
     caricaDomande();
   </script>
 </body>
