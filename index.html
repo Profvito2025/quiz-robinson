@@ -11,6 +11,11 @@
     .opzione { margin: 4px 0; }
     textarea { width: 100%; height: 100px; margin-top: 10px; }
     #invia { margin-top: 30px; padding: 10px 20px; font-size: 16px; }
+
+    /* PDF container nascosto di default */
+    #contenutoPdf {
+      display: none;
+    }
   </style>
 </head>
 <body>
@@ -18,29 +23,26 @@
   <div id="quiz"></div>
   <button id="invia">INVIA</button>
 
-  <!-- Contenitore invisibile per il contenuto PDF -->
-  <div id="contenutoPdf" style="visibility: hidden; height: 0; overflow: hidden;"></div>
+  <!-- Contenitore PDF -->
+  <div id="contenutoPdf"></div>
 
-  <!-- Libreria html2pdf -->
+  <!-- Libreria per il salvataggio PDF -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
   <script>
-    // Carica domande dai due file JSON
     async function caricaDomande() {
       try {
         const [sceltaRes, apertaRes] = await Promise.all([
           fetch('domande_scelta.json'),
           fetch('domande_aperta.json')
         ]);
-
         const tutteScelte = await sceltaRes.json();
         const tutteAperte = await apertaRes.json();
 
-        // Seleziona 80 domande a scelta + 1 aperta
         const scelteCasuali = tutteScelte.sort(() => 0.5 - Math.random()).slice(0, 80);
         const apertaCasuale = tutteAperte[Math.floor(Math.random() * tutteAperte.length)];
-
         const tutteDomande = [...scelteCasuali, apertaCasuale];
+
         const quizDiv = document.getElementById('quiz');
 
         tutteDomande.forEach((domanda, i) => {
@@ -59,13 +61,13 @@
           quizDiv.appendChild(div);
         });
       } catch (error) {
-        alert("Errore nel caricamento delle domande. Controlla i file JSON.");
-        console.error(error);
+        console.error("Errore nel caricamento delle domande:", error);
+        alert("Errore nel caricamento delle domande.");
       }
     }
 
     // Salva le risposte in PDF
-    document.getElementById('invia').addEventListener('click', () => {
+    document.getElementById('invia').addEventListener('click', async () => {
       const contenitore = document.getElementById('contenutoPdf');
       contenitore.innerHTML = "<h2>Risposte del quiz</h2>";
 
@@ -77,13 +79,21 @@
         contenitore.innerHTML += `<p><strong>${i + 1}. ${testoDomanda}</strong><br>Risposta: ${risposta}</p>`;
       });
 
+      // Mostra il contenuto visibile per il PDF
+      contenitore.style.display = 'block';
+
+      // Aspetta un attimo per garantire il rendering
+      await new Promise(resolve => setTimeout(resolve, 100));
+
       const nomeFile = prompt("Inserisci il nome del file PDF:");
       if (nomeFile) {
-        html2pdf().from(contenitore).save(nomeFile + ".pdf");
+        await html2pdf().from(contenitore).save(nomeFile + ".pdf");
       }
+
+      // Nasconde di nuovo il contenitore dopo il salvataggio
+      contenitore.style.display = 'none';
     });
 
-    // Avvio
     caricaDomande();
   </script>
 </body>
